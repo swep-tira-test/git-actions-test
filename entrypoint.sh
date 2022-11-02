@@ -2,8 +2,6 @@
 
 file=./input.txt
 
-cat $file
-
 sum=0
 while read -r line
 do
