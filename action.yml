@@ -1,24 +1,15 @@
 # action.yml
 name: 'Hello World'
 description: 'Greet someone and record the time'
-inputs:
-  who-to-greet:  # id of input
-    description: 'Who to greet'
-    required: true
-    default: 'World'
+#inputs:
+#  who-to-greet:  # id of input
+#    description: 'Who to greet'
+#    required: true
+#    default: 'World'
 outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+  result: # id of output
+    description: 'result of the calculation / machine learning algorithm'
 runs:
-#  - uses: addnab/docker-run-action@v1
-#    with:
-#      image: 'Dockerfile'
-#      options: -v $GITHUB_WORKSPACE/input.txt:/data/test/input.txt
-
+  # create and run docker container
   using: 'docker'
   image: 'Dockerfile'
-#  args:
-#    - ${{ inputs.who-to-greet }}
-
-#  volumes:
-#    - ${{ github.workspace }}/input.txt:/data/test/input.txt
