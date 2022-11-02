@@ -9,4 +9,4 @@ do
 done < $file
 echo $sum
 
-echo "::set-output name=result::$(echo $sum)" >> $GITHUB_OUTPUT
+echo "$sum" >> $GITHUB_OUTPUT
