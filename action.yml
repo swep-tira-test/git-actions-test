@@ -15,4 +15,4 @@ runs:
   args:
     - ${{ inputs.who-to-greet }}
   volumes:
-    - ./input.txt:/data/test/input.txt
+    - ${{ github.workspace }}/input.txt:/data/test/input.txt
