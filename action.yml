@@ -14,5 +14,5 @@ runs:
   image: 'Dockerfile'
   args:
     - ${{ inputs.who-to-greet }}
-  volumes:
-    - ${{ github.workspace }}/input.txt:/data/test/input.txt
+#  volumes:
+#    - ${{ github.workspace }}/input.txt:/data/test/input.txt
