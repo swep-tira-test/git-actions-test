@@ -10,14 +10,15 @@ outputs:
   time: # id of output
     description: 'The time we greeted you'
 runs:
-  uses: addnab/docker-run-action@v1
-  with:
-    image: 'Dockerfile'
-    options: -v $GITHUB_WORKSPACE/input.txt:/data/test/input.txt
+#  - uses: addnab/docker-run-action@v1
+#    with:
+#      image: 'Dockerfile'
+#      options: -v $GITHUB_WORKSPACE/input.txt:/data/test/input.txt
 
-#  using: 'docker'
-#  image: 'Dockerfile'
+  using: 'docker'
+  image: 'Dockerfile'
 #  args:
 #    - ${{ inputs.who-to-greet }}
+
 #  volumes:
 #    - ${{ github.workspace }}/input.txt:/data/test/input.txt
