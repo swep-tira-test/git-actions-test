@@ -1,12 +1,14 @@
 #!/bin/sh -l
 
-ls -la
-
 file=./input.txt
-SUM=0
-for num in $(cat $file)
-    do
-        ((SUM+=num))
-done
-echo $SUM
-echo "summe=$SUM" >> $GITHUB_OUTPUT
+
+cat $file
+
+sum=0
+while read -r line
+do
+   (( sum += line ))
+done < $file
+echo $sum
+
+echo "summe=$sum" >> $GITHUB_OUTPUT
