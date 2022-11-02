@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Warning! Special advanced machine learning algorithms incoming!
+
 file=./input.txt
 
 sum=0
