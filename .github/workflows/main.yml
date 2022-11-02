@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     name: start docker container
     outputs:
-      sum: ${{ steps.docker.outputs.summe }}
+      summe: ${{ steps.docker.outputs.summe }}
 
     steps:
       # To use this repository's private action,
@@ -26,3 +26,5 @@ jobs:
     steps:
       - name: run eval-Script
         run: ./eval.sh
+        env:
+          ENV_RESULT: ${{ needs.run_docker.outputs.summe }}
