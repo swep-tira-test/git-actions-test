@@ -5,29 +5,32 @@ jobs:
     runs-on: ubuntu-latest
     name: start docker container
     outputs:
-      summe: ${{ steps.docker.outputs.summe }}
+      output-from-docker: ${{ steps.docker.outputs.result }}
 
     steps:
-      # To use this repository's private action,
-      # you must check out the repository
+  
+      # get content of Repository into the current workingdirectory
       - name: Checkout
         uses: actions/checkout@v3
+        
       - name: docker action
         uses: ./ # Uses an action in the root directory
         id: docker
 
       # Use the output from the `hello` step
       - name: Display the output
-        run: echo "The result was ${{ steps.docker.outputs.summe }}"
+        run: echo "The result was ${{ steps.docker.outputs.result }}"
         
   evaluate:
     needs: run_docker
     runs-on: ubuntu-latest
     steps:
+        # get content of Repository into the current workingdirectory
       - name: Checkout
         uses: actions/checkout@v3
         
+        # check if the result of the docker execution is correct
       - name: run eval-Script
         run: bash ./eval.sh
         env:
-          ENV_RESULT: ${{ needs.run_docker.outputs.summe }}
+          ENV_RESULT: ${{ needs.run_docker.outputs.output-from-docker }}
