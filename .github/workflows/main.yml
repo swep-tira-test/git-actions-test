@@ -28,6 +28,6 @@ jobs:
         uses: actions/checkout@v3
         
       - name: run eval-Script
-        run: ./eval.sh
+        run: bash ./eval.sh
         env:
           ENV_RESULT: ${{ needs.run_docker.outputs.summe }}
