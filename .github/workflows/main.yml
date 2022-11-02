@@ -1,23 +1,28 @@
 on: [push]
 
 jobs:
-  hello_world_job:
+  run_docker:
     runs-on: ubuntu-latest
-    name: A job to say hello
-#    container:
-#      image: 'Dockerfile'
-#      volumes:
-#        - ${{ github.workspace }}/input.txt:/data/test/input.txt
+    name: start docker container
+    outputs:
+      sum: ${{ steps.docker.outputs.summe }}
+
     steps:
       # To use this repository's private action,
       # you must check out the repository
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Hello world action step
+      - name: docker action
         uses: ./ # Uses an action in the root directory
-        id: hello
-        with:
-          who-to-greet: 'Mona the Octocat'
+        id: docker
+
       # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+      - name: Get the output
+        run: echo "The time was ${{ steps.docker.outputs.summe }}"
+        
+  evaluate:
+    needs: run_docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: run eval-Script
+        run: ./eval.sh
