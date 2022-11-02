@@ -3,5 +3,9 @@
 ls -la
 
 file=./input.txt
-awk "{ sum += $file } END { print sum }" file >> sum
-echo "summe=$sum" >> $GITHUB_OUTPUT
+SUM=0
+while read LINE
+do
+SUM=expr $SUM + $LINE
+done < $file
+echo "summe=$SUM" >> $GITHUB_OUTPUT
