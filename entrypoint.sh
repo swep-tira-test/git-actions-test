@@ -1,5 +1,5 @@
 #!/bin/sh -l
 
-echo "Hello $1"
-time=$(date)
-echo "time=$time" >> $GITHUB_OUTPUT
+file = /data/test/input.txt
+awk '{ sum += $file } END { print sum }' file >> sum
+echo "summe=$sum" >> $GITHUB_OUTPUT
