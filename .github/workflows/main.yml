@@ -4,10 +4,10 @@ jobs:
   hello_world_job:
     runs-on: ubuntu-latest
     name: A job to say hello
-    container:
-      image: 'Dockerfile'
-      volumes:
-        - ${{ github.workspace }}/input.txt:/data/test/input.txt
+#    container:
+#      image: 'Dockerfile'
+#      volumes:
+#        - ${{ github.workspace }}/input.txt:/data/test/input.txt
     steps:
       # To use this repository's private action,
       # you must check out the repository
