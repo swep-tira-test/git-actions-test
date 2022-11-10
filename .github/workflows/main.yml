@@ -2,11 +2,11 @@ on:
   workflow_dispatch:
     inputs:
       task-docker-image:
-        description: 'docker image, which will try to solve the challenge'     
+        description: 'Docker image, which will try to solve the challenge'     
         required: true
         default: 'ubuntu:latest'
       task-docker-command:
-        description: 'command, which will be executed in the docker container'     
+        description: 'Command, which will be executed in the docker container'     
         required: true
         default: ''
       task-challenge-input-directory:
@@ -19,11 +19,11 @@ on:
         default: '${{ github.workspace }}'
         
       eval-docker-image:
-        description: 'docker image, which will evaluate the prediction'     
+        description: 'Docker image, which will evaluate the prediction'     
         required: true
         default: 'ubuntu:latest'
       eval-docker-command:
-        description: 'command, which will be executed in the evaluation docker container'     
+        description: 'Command, which will be executed in the evaluation docker container'     
         required: true
         default: ''
       eval-ground-truth-directory:
@@ -34,11 +34,11 @@ on:
       cpu-cores:
         description: 'Number of CPU Cores for the runner'     
         required: false
-        default: 'master'
+        default: '2'
       ram-gb:
         description: 'Amount of RAM in GB for the runner'     
         required: false
-        default: 'master'
+        default: '7'
         
 jobs:
   task-container:
