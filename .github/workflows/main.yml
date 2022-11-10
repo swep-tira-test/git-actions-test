@@ -66,8 +66,8 @@ jobs:
           options: | 
             -v ${{ inputs.task-challenge-input-directory }}:/inputDataset
             -v ${{ inputs.task-challenge-output-directory }}:/output
-            -e inputDataset='/input'
-            -e outputDataset='/output'     
+            -e "inputDataset=/input"
+            -e "outputDataset=/output"   
           shell: bash
           run: ${{ inputs.task-docker-command }}
 
@@ -109,9 +109,9 @@ jobs:
             -v ${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
             -v ${{ inputs.eval-ground-truth-directory }}:/groundTruth
             -v ${{ inputs.eval-output-directory }}:/outputEval
-            -e inputRun'/toBeEvaluated'
-            -e inputDataset='/groundTruth'
-            -e outputDir='/outputEval'
+            -e "inputRun=/toBeEvaluated"
+            -e "inputDataset=/groundTruth"
+            -e "outputDir=/outputEval"
           shell: bash
           run: ${{ inputs.eval-docker-command }}
          
