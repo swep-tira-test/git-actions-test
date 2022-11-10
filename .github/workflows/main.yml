@@ -59,11 +59,6 @@ jobs:
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
           image: ${{ inputs.task-docker-image }}
-          options: | 
-            -v ${{ inputs.task-challenge-input-directory }}:/input    \
-            -v ${{ inputs.task-challenge-output-directory }}:/output  \
-            -e inputDataset='/input'  \
-            -e outputDataset='/output'
           shell: bash
           run: ${{ inputs.task-docker-command }}
 
