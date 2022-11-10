@@ -60,15 +60,15 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.task-docker-image }}
           options: | 
-            -v ${{ task-challenge-input-directory }}:/input    \
-            -v ${{ task-challenge-output-directory }}:/output  \
+            -v ${{ inputs.task-challenge-input-directory }}:/input    \
+            -v ${{ inputs.task-challenge-output-directory }}:/output  \
             -e $inputDataset='/input'  \
             -e $outputDataset='/output'
-          run: ${{ task-docker-command }}
+          run: ${{ inputs.task-docker-command }}
           
       - uses: actions/cache@v3
         with:
-          path: ${{ task-challenge-output-directory }}
+          path: ${{ inputs.task-challenge-output-directory }}
           key: output-dir-key
 
       #- name: Display the output
@@ -87,7 +87,7 @@ jobs:
         
       - uses: actions/cache@v3
         with:
-          path: ${{ task-challenge-output-directory }}
+          path: ${{ inputs.task-challenge-output-directory }}
           key: output-dir-key
         
       - name: docker-run-eval
@@ -98,6 +98,6 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.eval-docker-image }}
           options: | 
-            -v ${{ task-challenge-output-directory }}:/input \
-            -v ${{ eval-ground-truth-directory }}:/truth
-          run: ${{ eval-docker-command }}
+            -v ${{ inputs.task-challenge-output-directory }}:/input \
+            -v ${{ inputs.eval-ground-truth-directory }}:/truth
+          run: ${{ inputs.eval-docker-command }}
