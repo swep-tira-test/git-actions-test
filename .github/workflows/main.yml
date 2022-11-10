@@ -1,36 +1,103 @@
-on: [push]
-
+on: 
+  workflow_dispatch:
+    inputs:
+      task-docker-image:
+        description: 'docker image, which will try to solve the challenge'     
+        required: true
+        default: 'ubuntu:latest'
+      task-docker-command:
+        description: 'command, which will be executed in the docker container'     
+        required: true
+        default: ''
+      task-challenge-input-directory:
+        description: 'Directory in which the input data can be accessed from the container'     
+        required: true
+        default: '${{ github.workspace }}'
+      task-challenge-output-directory:
+        description: 'Directory in which the challenge output data should be stored'     
+        required: true
+        default: '${{ github.workspace }}'
+        
+      eval-docker-image:
+        description: 'docker image, which will evaluate the prediction'     
+        required: true
+        default: 'ubuntu:latest'
+      eval-docker-command:
+        description: 'command, which will be executed in the evaluation docker container'     
+        required: true
+        default: ''
+      eval-ground-truth-directory:
+        description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
+        required: true
+        default: ''
+      
+      cpu-cores:
+        description: 'Number of CPU Cores for the runner'     
+        required: false
+        default: 'master'
+      ram-gb:
+        description: 'Amount of RAM in GB for the runner'     
+        required: false
+        default: 'master'
+        
 jobs:
-  run_docker:
+  task-container:
     runs-on: ubuntu-latest
-    name: start docker container
-    outputs:
-      output-from-docker: ${{ steps.docker.outputs.result }}
-
+    name: run task container
+    #outputs:
+    #  output-from-docker: ${{ steps.docker.outputs.result }}
     steps:
   
       # get content of Repository into the current workingdirectory
-      - name: Checkout
+      - name: Checkout Repo
         uses: actions/checkout@v3
         
-      - name: docker action
-        uses: ./ # Uses an action in the root directory
-        id: docker
+      - name: docker-run
+        uses: addnab/docker-run-action@v3
+        with:
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          #registry: gcr.io
+          image: ${{ inputs.task-docker-image }}
+          options: | 
+            -v ${{ task-challenge-input-directory }}:/input    \
+            -v ${{ task-challenge-output-directory }}:/output  \
+            -e $inputDataset='/input'  \
+            -e $outputDataset='/output'
+          run: ${{ task-docker-command }}
+          
+      - uses: actions/cache@v3
+        with:
+          path: ${{ task-challenge-output-directory }}
+          key: output-dir-key
 
-      # Use the output from the `hello` step
-      - name: Display the output
-        run: echo "The result was ${{ steps.docker.outputs.result }}"
+      #- name: Display the output
+      #  run: echo "The result was ${{ steps.docker.outputs.result }}"
         
-  evaluate:
-    needs: run_docker
+  evaluate-container:
+    needs: task-container
     runs-on: ubuntu-latest
+    outputs:
+      eval-result: ${{ steps.docker-run-eval.outputs.result }}
     steps:
-        # get content of Repository into the current workingdirectory
-      - name: Checkout
+  
+      # get content of Repository into the current workingdirectory
+      - name: Checkout Repo
         uses: actions/checkout@v3
         
-        # check if the result of the docker execution is correct
-      - name: run eval-Script
-        run: bash ./eval.sh
-        env:
-          ENV_RESULT: ${{ needs.run_docker.outputs.output-from-docker }}
+      - uses: actions/cache@v3
+        with:
+          path: ${{ task-challenge-output-directory }}
+          key: output-dir-key
+        
+      - name: docker-run-eval
+        uses: addnab/docker-run-action@v3
+        with:
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          #registry: gcr.io
+          image: ${{ inputs.eval-docker-image }}
+          options: | 
+            -v ${{ task-challenge-output-directory }}:/input \
+            -v ${{ eval-ground-truth-directory }}:/truth
+          run: ${{ eval-docker-command }}
