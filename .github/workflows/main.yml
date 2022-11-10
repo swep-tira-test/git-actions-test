@@ -12,11 +12,11 @@ on:
       task-challenge-input-directory:
         description: 'Directory in which the input data can be accessed from the container'     
         required: true
-        default: ''
+        default: '/inputDataset'
       task-challenge-output-directory:
         description: 'Directory in which the challenge output data should be stored'     
         required: true
-        default: ''
+        default: '/outputOfRun'
         
       eval-docker-image:
         description: 'Docker image, which will evaluate the prediction'     
@@ -29,7 +29,11 @@ on:
       eval-ground-truth-directory:
         description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
         required: true
-        default: ''
+        default: '/inputGroundTruth'
+      eval-output-directory:
+        description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
+        required: true
+        default: '/outputEval'
       
       cpu-cores:
         description: 'Number of CPU Cores for the runner'     
@@ -60,7 +64,7 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.task-docker-image }}
           options: | 
-            -v ${{ inputs.task-challenge-input-directory }}:/input
+            -v ${{ inputs.task-challenge-input-directory }}:/inputDataset
             -v ${{ inputs.task-challenge-output-directory }}:/output
             -e inputDataset='/input'
             -e outputDataset='/output'     
@@ -70,7 +74,8 @@ jobs:
           
       - uses: actions/cache@v3
         with:
-          path: ${{ inputs.task-challenge-output-directory }}
+          path: |
+            ${{ inputs.task-challenge-output-directory }}
           key: output-dir-key
 
       #- name: Display the output
@@ -99,9 +104,20 @@ jobs:
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
           image: ${{ inputs.eval-docker-image }}
+          # input data (/inputRun) = output data of the to be evaluted container run
           options: | 
-            -v ${{ inputs.task-challenge-output-directory }}:/input \
-            -v ${{ inputs.eval-ground-truth-directory }}:/truth
+            -v ${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
+            -v ${{ inputs.eval-ground-truth-directory }}:/groundTruth
+            -v ${{ inputs.eval-output-directory }}:/outputEval
+            -e inputRun'/toBeEvaluated'
+            -e inputDataset='/groundTruth'
+            -e outputDir='/outputEval'
           shell: bash
           run: ${{ inputs.eval-docker-command }}
          
+      - name: 'Upload Eval Result'
+        uses: actions/upload-artifact@v3
+        with:
+          name: evaluation-result
+          path: ${{ inputs.eval-output-directory }}
+          retention-days: 3
