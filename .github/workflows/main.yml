@@ -62,9 +62,11 @@ jobs:
           options: | 
             -v ${{ inputs.task-challenge-input-directory }}:/input    \
             -v ${{ inputs.task-challenge-output-directory }}:/output  \
-            -e $inputDataset='/input'  \
-            -e $outputDataset='/output'
+            -e inputDataset='/input'  \
+            -e outputDataset='/output'
+          shell: bash
           run: ${{ inputs.task-docker-command }}
+
           
       - uses: actions/cache@v3
         with:
@@ -100,4 +102,6 @@ jobs:
           options: | 
             -v ${{ inputs.task-challenge-output-directory }}:/input \
             -v ${{ inputs.eval-ground-truth-directory }}:/truth
+          shell: bash
           run: ${{ inputs.eval-docker-command }}
+         
