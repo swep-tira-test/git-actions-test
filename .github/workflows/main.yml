@@ -12,11 +12,11 @@ on:
       task-challenge-input-directory:
         description: 'Directory in which the input data can be accessed from the container'     
         required: true
-        default: '${{ github.workspace }}'
+        default: ''
       task-challenge-output-directory:
         description: 'Directory in which the challenge output data should be stored'     
         required: true
-        default: '${{ github.workspace }}'
+        default: ''
         
       eval-docker-image:
         description: 'Docker image, which will evaluate the prediction'     
