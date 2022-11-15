@@ -64,8 +64,8 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.task-docker-image }}
           options: | 
-            -v ./${{ inputs.task-challenge-input-directory }}:/input
-            -v ./${{ inputs.task-challenge-output-directory }}:/output
+            -v /$(pwd)/${{ inputs.task-challenge-input-directory }}:/input
+            -v /$(pwd)/${{ inputs.task-challenge-output-directory }}:/output
             -e "inputDataset=/input"
             -e "outputDataset=/output"
             --network none
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            ./${{ inputs.task-challenge-output-directory }}
+            /$(pwd)/${{ inputs.task-challenge-output-directory }}
           key: output-dir-key
 
       #- name: Display the output
@@ -95,7 +95,7 @@ jobs:
         
       - uses: actions/cache@v3
         with:
-          path: ./${{ inputs.task-challenge-output-directory }}
+          path: /$(pwd)/${{ inputs.task-challenge-output-directory }}
           key: output-dir-key
         
       - name: docker-run-eval
@@ -107,9 +107,9 @@ jobs:
           image: ${{ inputs.eval-docker-image }}
           # input data (/inputRun) = output data of the to be evaluted container run
           options: | 
-            -v ./${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
-            -v ./${{ inputs.eval-ground-truth-directory }}:/groundTruth
-            -v ./${{ inputs.eval-output-directory }}:/outputEval
+            -v /$(pwd)/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
+            -v /$(pwd)/${{ inputs.eval-ground-truth-directory }}:/groundTruth
+            -v /$(pwd)/${{ inputs.eval-output-directory }}:/outputEval
             -e "inputRun=/toBeEvaluated"
             -e "inputDataset=/groundTruth"
             -e "outputDir=/outputEval"
