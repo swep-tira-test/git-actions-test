@@ -72,7 +72,9 @@ jobs:
           #shell: bash
           run: ${{ inputs.task-docker-command }}
 
-          
+      - name: debug print output dir
+        run: ls -la /$(pwd)/{{ inputs.task-challenge-output-directory }}
+
       - uses: actions/cache@v3
         with:
           path: |
