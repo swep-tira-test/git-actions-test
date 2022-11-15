@@ -121,5 +121,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: evaluation-result
-          path: ${{ inputs.eval-output-directory }}
+          path: /$(pwd)/${{ inputs.eval-output-directory }}
           retention-days: 3
