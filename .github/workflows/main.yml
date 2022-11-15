@@ -72,7 +72,7 @@ jobs:
             -v /$(pwd)/${{ inputs.task-challenge-input-directory }}:/input
             -v /$(pwd)/${{ inputs.task-challenge-output-directory }}:/output
             -e "inputDataset=/input"
-            -e "outputDataset=/output"
+            -e "outputDir=/output"
             --network none
           #shell: bash
           run: ${{ inputs.task-docker-command }}
