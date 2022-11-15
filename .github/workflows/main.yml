@@ -56,12 +56,12 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         
-      - name: create dir
+      - name: create directories if not present
         run: |
-          mkdir -p /$(pwd)/${{ inputs.task-challenge-input-directory }}
-          mkdir -p /$(pwd)/${{ inputs.task-challenge-output-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
         
-      - name: docker-run
+      - name: docker run challenge
         uses: addnab/docker-run-action@v3
         with:
           #username: ${{ secrets.DOCKER_USERNAME }}
@@ -80,7 +80,7 @@ jobs:
       - name: debug print output dir
         run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
 
-      - name: export cache
+      - name: export cache (challenge-output-directory)
         uses: actions/cache@v3
         with:
           path: |
@@ -101,13 +101,13 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         
-      - name: create dir
+      - name: create directories if not present
         run: |
-          mkdir -p /$(pwd)/${{ inputs.task-challenge-output-directory }}
-          mkdir -p /$(pwd)/${{ inputs.eval-ground-truth-directory }}
-          mkdir -p /$(pwd)/${{ inputs.eval-output-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.eval-output-directory }}
         
-      - name: import cache
+      - name: import cache (challenge-output-directory)
         uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
@@ -116,7 +116,7 @@ jobs:
       - name: debug print output dir
         run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
         
-      - name: docker-run-eval
+      - name: docker run evaluation
         uses: addnab/docker-run-action@v3
         with:
           #username: ${{ secrets.DOCKER_USERNAME }}
@@ -135,7 +135,7 @@ jobs:
           #shell: bash
           run: ${{ inputs.eval-docker-command }}
          
-      - name: 'Upload Eval Result'
+      - name: Upload Evaluation Result
         uses: actions/upload-artifact@v3
         with:
           name: evaluation-result
