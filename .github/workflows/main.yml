@@ -76,7 +76,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            /$(pwd)/${{ inputs.task-challenge-output-directory }}
+            ./{{ inputs.task-challenge-output-directory }}
           key: output-dir-key
 
       #- name: Display the output
@@ -95,7 +95,7 @@ jobs:
         
       - uses: actions/cache@v3
         with:
-          path: /$(pwd)/${{ inputs.task-challenge-output-directory }}
+          path: ./{{ inputs.task-challenge-output-directory }}
           key: output-dir-key
         
       - name: docker-run-eval
@@ -121,5 +121,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: evaluation-result
-          path: /$(pwd)/${{ inputs.eval-output-directory }}
+          path: ./${{ inputs.eval-output-directory }}
           retention-days: 3
