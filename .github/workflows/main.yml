@@ -56,6 +56,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         
+      - name: create dir
+        run: |
+          mkdir -p /$(pwd)/${{ inputs.task-challenge-input-directory }}
+          mkdir -p /$(pwd)/${{ inputs.task-challenge-output-directory }}
+        
       - name: docker-run
         uses: addnab/docker-run-action@v3
         with:
