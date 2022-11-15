@@ -77,7 +77,7 @@ jobs:
         with:
           path: |
             /$(pwd)/{{ inputs.task-challenge-output-directory }}
-          key: output-dir-key
+          key: output-dir-key-${{ github.run_id }}
 
       #- name: Display the output
       #  run: echo "The result was ${{ steps.docker.outputs.result }}"
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: /$(pwd)/{{ inputs.task-challenge-output-directory }}
-          key: output-dir-key
+          key: output-dir-key-${{ github.run_id }}
         
       - name: docker-run-eval
         uses: addnab/docker-run-action@v3
