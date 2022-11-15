@@ -84,7 +84,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ${{ GITHUB_WORKSPACE }}/${{ inputs.task-challenge-output-directory }}
+            ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
           key: output-dir-key-${{ github.run_id }}
 
       #- name: Display the output
@@ -110,7 +110,7 @@ jobs:
       - name: import cache
         uses: actions/cache@v3
         with:
-          path: ${{ GITHUB_WORKSPACE }}/${{ inputs.task-challenge-output-directory }}
+          path: ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
           key: output-dir-key-${{ github.run_id }}
           
       - name: debug print output dir
@@ -139,5 +139,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: evaluation-result
-          path: ${{ GITHUB_WORKSPACE }}/${{ inputs.eval-output-directory }}
+          path: ${{ github.workspace }}/${{ inputs.eval-output-directory }}
           retention-days: 3
