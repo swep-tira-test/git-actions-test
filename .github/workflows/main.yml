@@ -64,11 +64,12 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.task-docker-image }}
           options: | 
-            -v ${{ inputs.task-challenge-input-directory }}:/inputDataset
+            -v ${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ inputs.task-challenge-output-directory }}:/output
             -e "inputDataset=/input"
-            -e "outputDataset=/output"   
-          shell: bash
+            -e "outputDataset=/output"
+            --network none
+          #shell: bash
           run: ${{ inputs.task-docker-command }}
 
           
@@ -112,7 +113,8 @@ jobs:
             -e "inputRun=/toBeEvaluated"
             -e "inputDataset=/groundTruth"
             -e "outputDir=/outputEval"
-          shell: bash
+            --network none
+          #shell: bash
           run: ${{ inputs.eval-docker-command }}
          
       - name: 'Upload Eval Result'
