@@ -80,7 +80,8 @@ jobs:
       - name: debug print output dir
         run: ls -la /$(pwd)/${{ inputs.task-challenge-output-directory }}
 
-      - uses: actions/cache@v3
+      - name: export cache
+        uses: actions/cache@v3
         with:
           path: |
             /$(pwd)/${{ inputs.task-challenge-output-directory }}
@@ -100,10 +101,20 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
         
-      - uses: actions/cache@v3
+      - name: create dir
+        run: |
+          mkdir -p /$(pwd)/${{ inputs.task-challenge-output-directory }}
+          mkdir -p /$(pwd)/${{ inputs.eval-ground-truth-directory }}
+          mkdir -p /$(pwd)/${{ inputs.eval-output-directory }}
+        
+      - name: import cache
+        uses: actions/cache@v3
         with:
           path: /$(pwd)/${{ inputs.task-challenge-output-directory }}
           key: output-dir-key-${{ github.run_id }}
+          
+      - name: debug print output dir
+        run: ls -la /$(pwd)/${{ inputs.task-challenge-output-directory }}
         
       - name: docker-run-eval
         uses: addnab/docker-run-action@v3
@@ -117,9 +128,9 @@ jobs:
             -v /$(pwd)/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
             -v /$(pwd)/${{ inputs.eval-ground-truth-directory }}:/groundTruth
             -v /$(pwd)/${{ inputs.eval-output-directory }}:/outputEval
-            -e "inputRun=/toBeEvaluated"
-            -e "inputDataset=/groundTruth"
-            -e "outputDir=/outputEval"
+            -e inputRun=/toBeEvaluated
+            -e inputDataset=/groundTruth
+            -e outputDir=/outputEval
             --network none
           #shell: bash
           run: ${{ inputs.eval-docker-command }}
