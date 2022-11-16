@@ -76,6 +76,7 @@ jobs:
             --network none
           #shell: bash
           run: ${{ inputs.task-docker-command }}
+          continue-on-error: true
 
       - name: debug print output dir
         run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
@@ -134,6 +135,7 @@ jobs:
             --network none
           #shell: bash
           run: ${{ inputs.eval-docker-command }}
+          continue-on-error: true
          
       - name: Upload Evaluation Result
         uses: actions/upload-artifact@v3
