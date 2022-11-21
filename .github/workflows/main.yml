@@ -42,14 +42,18 @@ on:
         # possible values: 
         # for runners hosted by github: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
         # for self hosted runners:      https://docs.github.com/en/enterprise-server@3.4/actions/hosting-your-own-runners/using-self-hosted-runners-in-a-workflow#using-default-labels-to-route-jobs
-      cpu-cores:
-        description: 'Number of CPU Cores for the runner'     
-        required: false
-        default: '2'
-      ram-gb:
-        description: 'Amount of RAM in GB for the runner'     
-        required: false
-        default: '7'
+      
+      # currently not used and unable to use because there are max. 10 inputs are allowed
+      # Error: "you may only define up to 10 `inputs` for a `workflow_dispatch` event"
+      
+      #cpu-cores:
+      #  description: 'Number of CPU Cores for the runner'     
+      #  required: false
+      #  default: '2'
+      #ram-gb:
+      #  description: 'Amount of RAM in GB for the runner'     
+      #  required: false
+      #  default: '7'
         
 jobs:
   task-container:
