@@ -35,6 +35,13 @@ on:
         required: true
         default: '/outputEval'
       
+      runs-on:
+        description: 'Whether the job should run on a self-hosted runner or on a runner hosted by Github (default)'     
+        required: false
+        default: 'ubuntu-latest'
+        # possible values: 
+        # for runners hosted by github: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
+        # for self hosted runners:      https://docs.github.com/en/enterprise-server@3.4/actions/hosting-your-own-runners/using-self-hosted-runners-in-a-workflow#using-default-labels-to-route-jobs
       cpu-cores:
         description: 'Number of CPU Cores for the runner'     
         required: false
@@ -46,7 +53,7 @@ on:
         
 jobs:
   task-container:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     name: run task container
     #outputs:
     #  output-from-docker: ${{ steps.docker.outputs.result }}
@@ -93,7 +100,7 @@ jobs:
         
   evaluate-container:
     needs: task-container
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runs-on }}
     outputs:
       eval-result: ${{ steps.docker-run-eval.outputs.result }}
     steps:
