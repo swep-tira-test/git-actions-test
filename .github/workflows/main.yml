@@ -31,7 +31,7 @@ on:
         required: true
         default: '/inputGroundTruth'
       eval-output-directory:
-        description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
+        description: 'Directory in which the evaluation result will be saved'     
         required: true
         default: '/outputEval'
       
