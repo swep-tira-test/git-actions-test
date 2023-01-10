@@ -12,7 +12,7 @@ import json
 import sys
 from django.conf import settings
 from datetime import datetime as dt
-from gitlab_integration import persist_tira_metadata_for_job
+#from gitlab_integration import persist_tira_metadata_for_job
 
 
 EXECUTED_ON_GITHUB = False
@@ -352,7 +352,7 @@ class TiraCiInterface:
 class TiraGitlabCiInterface(TiraCiInterface):
 
     def persist_tira_metadata_for_job_intern(run_dir, run_id, job_name):
-        persist_tira_metadata_for_job(run_dir, run_id, job_name)
+        #persist_tira_metadata_for_job(run_dir, run_id, job_name)
         pass
 
     pass
