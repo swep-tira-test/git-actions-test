@@ -116,7 +116,7 @@ jobs:
         continue-on-error: true
 
       - name: debug print output dir
-        run: ls -la ${{ github.workspace }}/ && ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+        run: cat ${{ github.workspace }}/task.env && ls -la ${{ github.workspace }}/ && ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
                 
       - id: persist-software-result
         name: Provisioning 2 Persist Software Result
