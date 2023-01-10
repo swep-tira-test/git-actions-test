@@ -106,7 +106,7 @@ jobs:
           #username: ${{ secrets.DOCKER_USERNAME }}
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
-          image: ${{ inputs.task-docker-image }}
+          image: ${{ env.TIRA_IMAGE_TO_EXECUTE }}
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
@@ -117,11 +117,14 @@ jobs:
           #shell: bash
           run: |
             printenv 
-            ${{ inputs.task-docker-command }}
+            ${{ env.TIRA_COMMAND_TO_EXECUTE }}
         continue-on-error: true
 
       - name: debug print output dir
-        run: cat ${{ github.workspace }}/task.env && ls -la ${{ github.workspace }}/ && ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+        run: |
+          cat ${{ github.workspace }}/task.env 
+          ls -la ${{ github.workspace }}/
+          ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
                 
       - id: persist-software-result
         name: Provisioning 2 Persist Software Result
@@ -146,7 +149,7 @@ jobs:
           #username: ${{ secrets.DOCKER_USERNAME }}
           #password: ${{ secrets.DOCKER_PASSWORD }}
           registry: ghcr.io
-          image: ${{ inputs.eval-docker-image }}
+          image: ${{ env.TIRA_EVALUATION_IMAGE_TO_EXECUTE }}
           # input data (/inputRun) = output data of the to be evaluted container run
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
@@ -159,7 +162,7 @@ jobs:
             --network none
           #shell: bash
           run: |
-            ${{ inputs.eval-docker-command }}
+            ${{ env.TIRA_EVALUATION_COMMAND_TO_EXECUTE }}
         continue-on-error: true
         
       - id: persist-evaluation-result
