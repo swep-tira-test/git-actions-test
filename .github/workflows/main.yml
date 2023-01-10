@@ -92,7 +92,7 @@ jobs:
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
             -v ${{ github.workspace }}/:/tira/application/src/
           #shell: bash
-          run: python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env
+          run: python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env && ls -la /tira/application/src/
         continue-on-error: false
         
       - id: run-user-software
@@ -115,7 +115,7 @@ jobs:
         continue-on-error: true
 
       - name: debug print output dir
-        run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+        run: ls -la ${{ github.workspace }}/ && ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
                 
       - id: persist-software-result
         name: Provisioning 2 Persist Software Result
