@@ -90,9 +90,9 @@ jobs:
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
-            -v ${{ github.workspace }}/:/
+            -v ${{ github.workspace }}/:/prepare-tira/
           #shell: bash
-          run: /tira_ci_interface.py --step 1 > /task.env
+          run: echo $PWD && /prepare-tira/tira_ci_interface.py --step 1 > /task.env
         continue-on-error: false
         
       - id: run-user-software
