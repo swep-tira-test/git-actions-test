@@ -41,10 +41,6 @@ on:
         required: false
         default: 'ubuntu-latest'
         
-      tira-preparation-container-image:
-        description: 'Container Image, which will take care of the preparation and persist steps'     
-        required: false
-        default: 'webis/tira-git-pipelines:0.0.19'
         # possible values: 
         # for runners hosted by github: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
         # for self hosted runners:      https://docs.github.com/en/enterprise-server@3.4/actions/hosting-your-own-runners/using-self-hosted-runners-in-a-workflow#using-default-labels-to-route-jobs
@@ -63,13 +59,14 @@ on:
         
 jobs:
   evaluation:
-    runs-on: ${{ inputs.runs-on }}
+    #runs-on: ${{ inputs.runs-on }}
+    runs-on: ubuntu-latest
     name: run task container and evaluation container
     #outputs:
     #  output-from-docker: ${{ steps.docker.outputs.result }}
     steps:
   
-      # get content of Repository into the current workingdirectory
+      # get content of Repository into the current working directory
       - name: Checkout Repo
         uses: actions/checkout@v3
         
@@ -87,7 +84,7 @@ jobs:
           #username: ${{ secrets.DOCKER_USERNAME }}
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
-          image: ${{ inputs.tira-preparation-container-image}}
+          image: webis/tira-git-pipelines:0.0.19
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
@@ -95,6 +92,12 @@ jobs:
           #shell: bash
           run: python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env
         continue-on-error: false
+        
+      - id: source-env
+        name: source/import env variables into the workflow runner environment
+        run: |
+          cat ${{ github.workspace }}/task.env >> $GITHUB_ENV
+        
         
       - id: run-user-software
         name: run user software
@@ -127,7 +130,7 @@ jobs:
           #username: ${{ secrets.DOCKER_USERNAME }}
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
-          image: ${{ inputs.tira-preparation-container-image}}
+          image: webis/tira-git-pipelines:0.0.19
           options: | 
             -v ${{ github.workspace }}/:/tira/application/src/
             --env-file ./task.env
@@ -166,7 +169,7 @@ jobs:
           #username: ${{ secrets.DOCKER_USERNAME }}
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
-          image: ${{ inputs.tira-preparation-container-image}}
+          image: webis/tira-git-pipelines:0.0.19
           options: | 
             -v ${{ github.workspace }}/:/tira/application/src/
             --env-file ./task.env
