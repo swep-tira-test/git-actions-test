@@ -90,9 +90,9 @@ jobs:
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
-            -v ${{ github.workspace }}/task.env:task.env
+            -v ${{ github.workspace }}/:/
           #shell: bash
-          run: ./tira_ci_interface.py --step 1 > task.env
+          run: /tira_ci_interface.py --step 1 > /task.env
         continue-on-error: false
         
       - id: run-user-software
@@ -126,8 +126,8 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.tira-preparation-container-image}}
           options: | 
-            -v ${{ github.workspace }}/:./
-            -v ${{ github.workspace }}/task.env:task.env
+            -v ${{ github.workspace }}/:/
+            --env-file ${{ github.workspace }}/task.env
           #shell: bash
           run: ./tira_ci_interface.py --step 2
         continue-on-error: false
@@ -163,8 +163,8 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.tira-preparation-container-image}}
           options: | 
-            -v ${{ github.workspace }}/:./
-            -v ${{ github.workspace }}/task.env:task.env
+            -v ${{ github.workspace }}/:/
+            --env-file ${{ github.workspace }}/task.env
           #shell: bash
           run: ./tira_ci_interface.py --step 3
         continue-on-error: false
