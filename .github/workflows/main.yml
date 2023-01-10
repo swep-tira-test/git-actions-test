@@ -1,4 +1,5 @@
 on: 
+  push:
   workflow_dispatch:
     inputs:
       task-docker-image:
@@ -106,7 +107,6 @@ jobs:
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
-            -v ${{ github.workspace }}/task.env:/task.env:ro
             --env-file ./task.env
             -e inputDataset=/input
             -e outputDir=/output
@@ -149,7 +149,6 @@ jobs:
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
             -v ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}:/groundTruth
             -v ${{ github.workspace }}/${{ inputs.eval-output-directory }}:/outputEval
-            -v ${{ github.workspace }}/task.env:/task.env:ro
             --env-file ./task.env
             -e inputRun=/toBeEvaluated
             -e inputDataset=/groundTruth
@@ -170,9 +169,9 @@ jobs:
           image: ${{ inputs.tira-preparation-container-image}}
           options: | 
             -v ${{ github.workspace }}/:/tira/application/src/
+            --env-file ./task.env
           #shell: bash
           run: |
-            set -a; source /tira/application/src/task.env; set +a
             python3 /tira/application/src/tira_ci_interface.py --step 3
         continue-on-error: false
          
