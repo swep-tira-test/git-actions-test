@@ -1,0 +1,16 @@
+TIRA_IMAGE_TO_EXECUTE=registry.webis.de/code-research/tira/tira-user-mr-fosdick/transformer-baseline-task1:0-tira-docker-software-id-tough-plasma
+TIRA_VM_ID=mr-fosdick
+TIRA_COMMAND_TO_EXECUTE=/transformer-baseline-task-1.py --input $inputDataset/input.jsonl --output $outputDir/run.jsonl
+TIRA_SOFTWARE_ID=docker-software-191
+TIRA_DATASET_ID=task-1-type-classification-20221115-test
+TIRA_RUN_ID=2022-12-21-23-08-58
+TIRA_CPU_COUNT=1
+TIRA_MEMORY_IN_GIBIBYTE=10
+TIRA_GPU=0
+TIRA_DATASET_TYPE=test
+TIRA_TASK_ID=clickbait-spoiling
+TIRA_EVALUATOR_TRANSACTION_ID=21e8b098-40b5-40fd-97ee-c34df4920833
+TIRA_GIT_ID=eval---task-1-type-classification-20221115-test---mr-fosdick---2022-12-21-23-08-58---started-2022-12-21-23-08-58
+TIRA_EVALUATION_IMAGE_TO_EXECUTE=webis/pan-clickbait-spoiling-evaluator:0.0.10
+TIRA_EVALUATION_COMMAND_TO_EXECUTE=bash -c '/clickbait-spoiling-eval.py --task 1 --ground_truth_classes $inputDataset --input_run $inputRun --output_prototext ${outputDir}/evaluation.prototext'
+TIRA_EVALUATION_SOFTWARE_ID=task-1-type-classification-20221115-test-evaluator
