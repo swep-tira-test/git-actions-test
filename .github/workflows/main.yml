@@ -39,6 +39,11 @@ on:
         description: 'Whether the job should run on a self-hosted runner or on a runner hosted by Github (default)'     
         required: false
         default: 'ubuntu-latest'
+        
+      tira-preparation-container-image:
+        description: 'Container Image, which will take care of the preparation and persist steps'     
+        required: false
+        default: 'webis/tira-git-pipelines:0.0.19'
         # possible values: 
         # for runners hosted by github: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
         # for self hosted runners:      https://docs.github.com/en/enterprise-server@3.4/actions/hosting-your-own-runners/using-self-hosted-runners-in-a-workflow#using-default-labels-to-route-jobs
@@ -56,9 +61,9 @@ on:
       #  default: '7'
         
 jobs:
-  task-container:
+  evaluation:
     runs-on: ${{ inputs.runs-on }}
-    name: run task container
+    name: run task container and evaluation container
     #outputs:
     #  output-from-docker: ${{ steps.docker.outputs.result }}
     steps:
@@ -71,8 +76,27 @@ jobs:
         run: |
           mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}
           mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.eval-output-directory }}
+          
+      - id: prepare-tira-environment
+        name: Provisioning 1 prepare environment
+        uses: addnab/docker-run-action@v3
+        with:
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          #registry: gcr.io
+          image: ${{ inputs.tira-preparation-container-image}}
+          options: | 
+            -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
+            -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
+            -v ${{ github.workspace }}/task.env:task.env
+          #shell: bash
+          run: ./tira_ci_interface.py --step 1 > task.env
+        continue-on-error: false
         
-      - name: docker run challenge
+      - id: run-user-software
+        name: run user software
         uses: addnab/docker-run-action@v3
         with:
           #username: ${{ secrets.DOCKER_USERNAME }}
@@ -82,6 +106,7 @@ jobs:
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
+            --env-file ${{ github.workspace }}/task.env
             -e inputDataset=/input
             -e outputDir=/output
             --network none
@@ -91,44 +116,24 @@ jobs:
 
       - name: debug print output dir
         run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
-
-      - name: export cache (challenge-output-directory)
-        uses: actions/cache@v3
+                
+      - id: persist-software-result
+        name: Provisioning 2 Persist Software Result
+        uses: addnab/docker-run-action@v3
         with:
-          path: |
-            ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
-          key: output-dir-key-${{ github.run_id }}
-
-      #- name: Display the output
-      #  run: echo "The result was ${{ steps.docker.outputs.result }}"
-        
-  evaluate-container:
-    needs: task-container
-    runs-on: ${{ inputs.runs-on }}
-    outputs:
-      eval-result: ${{ steps.docker-run-eval.outputs.result }}
-    steps:
-  
-      # get content of Repository into the current workingdirectory
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-        
-      - name: create directories if not present
-        run: |
-          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
-          mkdir -p ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}
-          mkdir -p ${{ github.workspace }}/${{ inputs.eval-output-directory }}
-        
-      - name: import cache (challenge-output-directory)
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
-          key: output-dir-key-${{ github.run_id }}
-          
-      - name: debug print output dir
-        run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
-        
-      - name: docker run evaluation
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          #registry: gcr.io
+          image: ${{ inputs.tira-preparation-container-image}}
+          options: | 
+            -v ${{ github.workspace }}/:./
+            -v ${{ github.workspace }}/task.env:task.env
+          #shell: bash
+          run: ./tira_ci_interface.py --step 2
+        continue-on-error: false
+      
+      - id: evaluate-software-result
+        name: Evaluate Software Result
         uses: addnab/docker-run-action@v3
         with:
           #username: ${{ secrets.DOCKER_USERNAME }}
@@ -140,6 +145,7 @@ jobs:
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
             -v ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}:/groundTruth
             -v ${{ github.workspace }}/${{ inputs.eval-output-directory }}:/outputEval
+            --env-file ${{ github.workspace }}/task.env
             -e inputRun=/toBeEvaluated
             -e inputDataset=/groundTruth
             -e outputDir=/outputEval
@@ -147,6 +153,21 @@ jobs:
           #shell: bash
           run: ${{ inputs.eval-docker-command }}
         continue-on-error: true
+        
+      - id: persist-evaluation-result
+        name: Provisioning 3 Persist Evaluation Result
+        uses: addnab/docker-run-action@v3
+        with:
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          #registry: gcr.io
+          image: ${{ inputs.tira-preparation-container-image}}
+          options: | 
+            -v ${{ github.workspace }}/:./
+            -v ${{ github.workspace }}/task.env:task.env
+          #shell: bash
+          run: ./tira_ci_interface.py --step 3
+        continue-on-error: false
          
       - name: Upload Evaluation Result
         uses: actions/upload-artifact@v3
