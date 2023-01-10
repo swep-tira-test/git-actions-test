@@ -92,7 +92,7 @@ jobs:
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
             -v ${{ github.workspace }}/:/tira/application/src/
           #shell: bash
-          run: python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env && ls -la /tira/application/src/
+          run: python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env
         continue-on-error: false
         
       - id: run-user-software
@@ -106,7 +106,8 @@ jobs:
           options: | 
             -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
-            --env-file ${{ github.workspace }}/task.env
+            -v ${{ github.workspace }}/task.env:/task.env:ro
+            --env-file /task.env
             -e inputDataset=/input
             -e outputDir=/output
             --network none
@@ -126,8 +127,8 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.tira-preparation-container-image}}
           options: | 
-            -v ${{ github.workspace }}/:/
-            --env-file ${{ github.workspace }}/task.env
+            -v ${{ github.workspace }}/:/tira/application/src/
+            --env-file /tira/application/src/task.env
           #shell: bash
           run: python3 /tira/application/src/tira_ci_interface.py --step 2
         continue-on-error: false
@@ -145,7 +146,8 @@ jobs:
             -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
             -v ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}:/groundTruth
             -v ${{ github.workspace }}/${{ inputs.eval-output-directory }}:/outputEval
-            --env-file ${{ github.workspace }}/task.env
+            -v ${{ github.workspace }}/task.env:/task.env:ro
+            --env-file /task.env
             -e inputRun=/toBeEvaluated
             -e inputDataset=/groundTruth
             -e outputDir=/outputEval
@@ -163,8 +165,8 @@ jobs:
           #registry: gcr.io
           image: ${{ inputs.tira-preparation-container-image}}
           options: | 
-            -v ${{ github.workspace }}/:/
-            --env-file ${{ github.workspace }}/task.env
+            -v ${{ github.workspace }}/:/tira/application/src/
+            --env-file /tira/application/src/task.env
           #shell: bash
           run: python3 /tira/application/src/tira_ci_interface.py --step 3
         continue-on-error: false
