@@ -122,10 +122,17 @@ jobs:
 
       - name: debug print output dir
         run: |
-          cat ${{ github.workspace }}/task.env 
           ls -la ${{ github.workspace }}/
           ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
                 
+      - name: debug print task.env file
+        run: |
+          cat ${{ github.workspace }}/task.env 
+
+      - name: debug print env
+        run: |
+          printenv 
+
       - id: persist-software-result
         name: Provisioning 2 Persist Software Result
         uses: addnab/docker-run-action@v3
