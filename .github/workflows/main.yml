@@ -1,0 +1,156 @@
+on: 
+  workflow_dispatch:
+    inputs:
+      task-docker-image:
+        description: 'Docker image, which will try to solve the challenge'     
+        required: true
+        default: 'ubuntu:latest'
+      task-docker-command:
+        description: 'Command, which will be executed in the docker container'     
+        required: true
+        default: ''
+      task-challenge-input-directory:
+        description: 'Directory in which the input data can be accessed from the container'     
+        required: true
+        default: '/inputDataset'
+      task-challenge-output-directory:
+        description: 'Directory in which the challenge output data should be stored'     
+        required: true
+        default: '/outputOfRun'
+        
+      eval-docker-image:
+        description: 'Docker image, which will evaluate the prediction'     
+        required: true
+        default: 'ubuntu:latest'
+      eval-docker-command:
+        description: 'Command, which will be executed in the evaluation docker container'     
+        required: true
+        default: ''
+      eval-ground-truth-directory:
+        description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
+        required: true
+        default: '/inputGroundTruth'
+      eval-output-directory:
+        description: 'Directory in which the evaluation result will be saved'     
+        required: true
+        default: '/outputEval'
+      
+      runs-on:
+        description: 'Whether the job should run on a self-hosted runner or on a runner hosted by Github (default)'     
+        required: false
+        default: 'ubuntu-latest'
+        # possible values: 
+        # for runners hosted by github: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idruns-on
+        # for self hosted runners:      https://docs.github.com/en/enterprise-server@3.4/actions/hosting-your-own-runners/using-self-hosted-runners-in-a-workflow#using-default-labels-to-route-jobs
+      
+      # currently not used and unable to use because there are max. 10 inputs are allowed
+      # Error: "you may only define up to 10 `inputs` for a `workflow_dispatch` event"
+      
+      #cpu-cores:
+      #  description: 'Number of CPU Cores for the runner'     
+      #  required: false
+      #  default: '2'
+      #ram-gb:
+      #  description: 'Amount of RAM in GB for the runner'     
+      #  required: false
+      #  default: '7'
+        
+jobs:
+  task-container:
+    runs-on: ${{ inputs.runs-on }}
+    name: run task container
+    #outputs:
+    #  output-from-docker: ${{ steps.docker.outputs.result }}
+    steps:
+  
+      # get content of Repository into the current workingdirectory
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        
+      - name: create directories if not present
+        run: |
+          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+        
+      - name: docker run challenge
+        uses: addnab/docker-run-action@v3
+        with:
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          #registry: gcr.io
+          image: ${{ inputs.task-docker-image }}
+          options: | 
+            -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
+            -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
+            -e inputDataset=/input
+            -e outputDir=/output
+            --network none
+          #shell: bash
+          run: ${{ inputs.task-docker-command }}
+        continue-on-error: true
+
+      - name: debug print output dir
+        run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+
+      - name: export cache (challenge-output-directory)
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+          key: output-dir-key-${{ github.run_id }}
+
+      #- name: Display the output
+      #  run: echo "The result was ${{ steps.docker.outputs.result }}"
+        
+  evaluate-container:
+    needs: task-container
+    runs-on: ${{ inputs.runs-on }}
+    outputs:
+      eval-result: ${{ steps.docker-run-eval.outputs.result }}
+    steps:
+  
+      # get content of Repository into the current workingdirectory
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        
+      - name: create directories if not present
+        run: |
+          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}
+          mkdir -p ${{ github.workspace }}/${{ inputs.eval-output-directory }}
+        
+      - name: import cache (challenge-output-directory)
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+          key: output-dir-key-${{ github.run_id }}
+          
+      - name: debug print output dir
+        run: ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+        
+      - name: docker run evaluation
+        uses: addnab/docker-run-action@v3
+        with:
+          #username: ${{ secrets.DOCKER_USERNAME }}
+          #password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          image: ${{ inputs.eval-docker-image }}
+          # input data (/inputRun) = output data of the to be evaluted container run
+          options: | 
+            -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
+            -v ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}:/groundTruth
+            -v ${{ github.workspace }}/${{ inputs.eval-output-directory }}:/outputEval
+            -e inputRun=/toBeEvaluated
+            -e inputDataset=/groundTruth
+            -e outputDir=/outputEval
+            --network none
+          #shell: bash
+          run: ${{ inputs.eval-docker-command }}
+        continue-on-error: true
+         
+      - name: Upload Evaluation Result
+        uses: actions/upload-artifact@v3
+        with:
+          name: evaluation-result
+          path: ${{ github.workspace }}/${{ inputs.eval-output-directory }}
+          retention-days: 3
