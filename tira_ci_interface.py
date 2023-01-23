@@ -12,15 +12,11 @@ import json
 import sys
 from django.conf import settings
 from datetime import datetime as dt
-from gitlab_integration import persist_tira_metadata_for_job
+from gitlab_integration import persist_tira_metadata_for_job, merge_to_main_failsave, delete_branch_of_repository
 from git import Repo
 import string
 from github import Github
 from subprocess import check_output
-
-from tira.git_integration.gitlab_integration import merge_to_main_failsave
-from tira.git_integration.gitlab_integration import delete_branch_of_repository; 
-
 
 EXECUTED_ON_GITHUB = False
 
