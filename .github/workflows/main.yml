@@ -42,7 +42,7 @@ on:
         description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
         required: true
         default: '/inputGroundTruth'
-      # now: env.TIRA_DATASET_EVAL_OUTPUT_PATH
+      # now: env.TIRA_FINAL_EVALUATION_OUTPUT_DIR
       eval-output-directory:
         description: 'Directory in which the evaluation result will be saved'     
         required: true
@@ -87,7 +87,7 @@ jobs:
           mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_INPUT_PATH }}
           mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}
           mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_GROUND_TRUTH_PATH }}
-          mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_OUTPUT_PATH }}
+          mkdir -p ${{ github.workspace }}/${{ env.TIRA_FINAL_EVALUATION_OUTPUT_DIR }}
           
       - id: prepare-tira-environment
         name: Provisioning 1 prepare environment
@@ -182,7 +182,7 @@ jobs:
           options: | 
             -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}:/toBeEvaluated
             -v ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_GROUND_TRUTH_PATH }}:/groundTruth
-            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_OUTPUT_PATH }}:/outputEval
+            -v ${{ github.workspace }}/${{ env.TIRA_FINAL_EVALUATION_OUTPUT_DIR }}:/outputEval
             --env-file ./task.env
             -e inputRun=/toBeEvaluated
             -e inputDataset=/groundTruth
@@ -205,6 +205,7 @@ jobs:
           image: webis/tira-git-pipelines:0.0.19
           options: | 
             -v ${{ github.workspace }}/:/tira/application/src/
+            -v ${{ github.workspace }}/${{ env.TIRA_FINAL_EVALUATION_OUTPUT_DIR }}:/${{ env.TIRA_FINAL_EVALUATION_OUTPUT_DIR }}
             --env-file ./task.env
             -e GITHUB_WORKSPACE=${{ env.GITHUB_WORKSPACE }}
             -e THIS_IS_EXECUTED_ON_GITHUB=true
@@ -217,5 +218,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: evaluation-result
-          path: ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_OUTPUT_PATH }}
+          path: ${{ github.workspace }}/${{ env.TIRA_FINAL_EVALUATION_OUTPUT_DIR }}
           retention-days: 3
