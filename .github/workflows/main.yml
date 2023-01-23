@@ -108,7 +108,6 @@ jobs:
           run: |
             python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env
             cat task.env
-        continue-on-error: false
         
       - id: source-env
         name: source/import env variables into the workflow runner environment
@@ -170,7 +169,6 @@ jobs:
           #shell: bash
           run: |
             python3 /tira/application/src/tira_ci_interface.py --step 2
-        continue-on-error: false
       
       - id: evaluate-software-result
         name: Evaluate Software Result
