@@ -2,35 +2,47 @@ on:
   push:
   workflow_dispatch:
     inputs:
+      # now: env.TIRA_IMAGE_TO_EXECUTE
       task-docker-image:
         description: 'Docker image, which will try to solve the challenge'     
         required: true
         default: 'ubuntu:latest'
+      # now: env.TIRA_COMMAND_TO_EXECUTE
       task-docker-command:
         description: 'Command, which will be executed in the docker container'     
         required: true
         default: ''
+        
+      # now: env.TIRA_DATASET_TASK_INPUT_PATH
       task-challenge-input-directory:
         description: 'Directory in which the input data can be accessed from the container'     
         required: true
         default: '/inputDataset'
+        
+      # now: env.TIRA_DATASET_TASK_OUTPUT_PATH
+      # this is also the directory from where the evaluator will receive the to be evaluated input
       task-challenge-output-directory:
         description: 'Directory in which the challenge output data should be stored'     
         required: true
         default: '/outputOfRun'
-        
+      
+      # now: env.TIRA_EVALUATION_IMAGE_TO_EXECUTE
       eval-docker-image:
         description: 'Docker image, which will evaluate the prediction'     
         required: true
         default: 'ubuntu:latest'
+      # now: env.TIRA_EVALUATION_COMMAND_TO_EXECUTE
       eval-docker-command:
         description: 'Command, which will be executed in the evaluation docker container'     
         required: true
         default: ''
+        
+      # now: env.TIRA_DATASET_EVAL_GROUND_TRUTH_PATH
       eval-ground-truth-directory:
         description: 'Directory in which the ground truth data can be accessed from the evaluation container'     
         required: true
         default: '/inputGroundTruth'
+      # now: env.TIRA_DATASET_EVAL_OUTPUT_PATH
       eval-output-directory:
         description: 'Directory in which the evaluation result will be saved'     
         required: true
@@ -72,10 +84,10 @@ jobs:
         
       - name: create directories if not present
         run: |
-          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}
-          mkdir -p ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
-          mkdir -p ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}
-          mkdir -p ${{ github.workspace }}/${{ inputs.eval-output-directory }}
+          mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_INPUT_PATH }}
+          mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}
+          mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_GROUND_TRUTH_PATH }}
+          mkdir -p ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_OUTPUT_PATH }}
           
       - id: prepare-tira-environment
         name: Provisioning 1 prepare environment
@@ -86,13 +98,15 @@ jobs:
           #registry: gcr.io
           image: webis/tira-git-pipelines:0.0.19
           options: | 
-            -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
-            -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_INPUT_PATH }}:/input
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}:/output
             -v ${{ github.workspace }}/:/tira/application/src/
             -e GITHUB_WORKSPACE=${{ env.GITHUB_WORKSPACE }}
             -e THIS_IS_EXECUTED_ON_GITHUB=true
           #shell: bash
-          run: python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env
+          run: |
+            python3 /tira/application/src/tira_ci_interface.py --step 1 > /tira/application/src/task.env
+            cat task.env
         continue-on-error: false
         
       - id: source-env
@@ -110,22 +124,26 @@ jobs:
           #registry: gcr.io
           image: ${{ env.TIRA_IMAGE_TO_EXECUTE }}
           options: | 
-            -v ${{ github.workspace }}/${{ inputs.task-challenge-input-directory }}:/input
-            -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/output
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_INPUT_PATH }}:/input
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}:/output
             --env-file ./task.env
             -e inputDataset=/input
             -e outputDir=/output
             --network none
           #shell: bash
           run: |
-            printenv 
-            ${{ env.TIRA_COMMAND_TO_EXECUTE }}
+            test -n "${TIRA_OUTPUT_DIR}" && mkdir -p ${TIRA_OUTPUT_DIR}
+            echo "${TIRA_COMMAND_TO_EXECUTE}"
+            eval "${TIRA_COMMAND_TO_EXECUTE}"
+            echo "${TIRA_CLEAN_UP_COMMAND}"
+            eval "${TIRA_CLEAN_UP_COMMAND}"
+          #  env|grep 'TIRA' > task.env
         continue-on-error: true
 
       - name: debug print output dir
         run: |
           ls -la ${{ github.workspace }}/
-          ls -la ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}
+          ls -la ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}
                 
       - name: debug print task.env file
         run: |
@@ -163,9 +181,9 @@ jobs:
           image: ${{ env.TIRA_EVALUATION_IMAGE_TO_EXECUTE }}
           # input data (/inputRun) = output data of the to be evaluted container run
           options: | 
-            -v ${{ github.workspace }}/${{ inputs.task-challenge-output-directory }}:/toBeEvaluated
-            -v ${{ github.workspace }}/${{ inputs.eval-ground-truth-directory }}:/groundTruth
-            -v ${{ github.workspace }}/${{ inputs.eval-output-directory }}:/outputEval
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}:/toBeEvaluated
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_GROUND_TRUTH_PATH }}:/groundTruth
+            -v ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_OUTPUT_PATH }}:/outputEval
             --env-file ./task.env
             -e inputRun=/toBeEvaluated
             -e inputDataset=/groundTruth
@@ -173,7 +191,9 @@ jobs:
             --network none
           #shell: bash
           run: |
-            ${{ env.TIRA_EVALUATION_COMMAND_TO_EXECUTE }}
+            echo "${TIRA_EVALUATION_COMMAND_TO_EXECUTE}"
+            eval "${TIRA_EVALUATION_COMMAND_TO_EXECUTE}"
+          # env|grep 'TIRA' > task.env
         continue-on-error: true
         
       - id: persist-evaluation-result
@@ -198,5 +218,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: evaluation-result
-          path: ${{ github.workspace }}/${{ inputs.eval-output-directory }}
+          path: ${{ github.workspace }}/${{ env.TIRA_DATASET_EVAL_OUTPUT_PATH }}
           retention-days: 3
