@@ -12,7 +12,14 @@ import json
 import sys
 from django.conf import settings
 from datetime import datetime as dt
-#from gitlab_integration import persist_tira_metadata_for_job
+from gitlab_integration import persist_tira_metadata_for_job
+from git import Repo
+import string
+from github import Github
+from subprocess import check_output
+
+from tira.git_integration.gitlab_integration import merge_to_main_failsave
+from tira.git_integration.gitlab_integration import delete_branch_of_repository; 
 
 
 EXECUTED_ON_GITHUB = False
@@ -21,7 +28,7 @@ class TiraCiInterface:
     pass
 
     def persist_tira_metadata_for_job_intern(run_dir, run_id, job_name):
-        raise ValueError('ToDo: Implement.')
+        pass
 
     def execute(self, step):
         """
@@ -58,7 +65,7 @@ class TiraCiInterface:
         return
         
     def provisioning1_prepare_environment(self):
-        """ TODO Franz
+        """
         Prepares the local environment by identifing the job to execute and 
         tests that the runner ist trustworthy (only if requiered)
         This step loads the data and sets all environment variables so that
@@ -344,24 +351,211 @@ class TiraCiInterface:
 
         #DIR_TO_CHANGE=$(echo ${TIRA_OUTPUT_DIR}| awk -F '/output' '{print $1}')
         dir_to_change = os.getenv('TIRA_OUTPUT_DIR').split('/output')[1]
-        tira_final_evaluation_output_dir = os.environ['TIRA_FINAL_EVALUATION_OUTPUT_DIR']
+        tira_final_evaluation_output_dir = os.getenv('TIRA_FINAL_EVALUATION_OUTPUT_DIR')
+        target_file = os.getenv('TARGET_FILE')
+        
 
-        pass
+
+        #if [ -f "${DIR_TO_CHANGE}/job-to-execute.txt" ]; then
+        if os.path.isfile(dir_to_change + "/job-to-execute.txt"):
+
+            f = open("/etc/tira-git-credentials/GITCREDENTIALUSERNAME", "r")
+            username = f.read()
+            f.close()
+
+            f = open("/etc/tira-git-credentials/GITCREDENTIALPASSWORD", "r")
+            password = f.read()
+            f.close()
+
+            #git remote set-url origin "https://$(cat /etc/tira-git-credentials/GITCREDENTIALUSERNAME):$(cat /etc/tira-git-credentials/GITCREDENTIALPASSWORD)@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+            repo = Repo( "https://" + username + ":" + password +"@" + os.getenv('CI_SERVER_HOST') + "/" + os.getenv('CI_PROJECT_PATH')+ ".git")
+
+            #git remote get-url origin
+
+            #git config user.email "tira-automation@tira.io"
+            #git config user.name "TIRA Automation"
+            repo.config_writer().set_value("user", "name", "TIRA Automation").release()
+            repo.config_writer().set_value("user", "email", "tira-automation@tira.io").release()
+
+            #TARGET_FILE="${DIR_TO_CHANGE}/job-executed-on-$(date +'%Y-%m-%d-%I-%M-%S').txt"
+            target_file = dir_to_change + "/job-executed-on-" + dt.datetime.now().strftime("%Y-%m-%d-%I-%M-%S") + ".txt"
+
+            #echo "mv ${DIR_TO_CHANGE}/job-to-execute.txt ${TARGET_FILE}"
+            print("shutil.move(" + dir_to_change + "/job-to-execute.txt, " + target_file +")")
+            #mv ${DIR_TO_CHANGE}/job-to-execute.txt ${TARGET_FILE}
+            shutil.move(dir_to_change + "/job-to-execute.txt", target_file)
+
+            #git rm ${DIR_TO_CHANGE}/job-to-execute.txt
+            repo.index.remove(dir_to_change + "/job-to-execute.txt",working_tree = True) #Without the working_tree argument the file is left in the working tree even though it is not in the repository.
+            #git add ${TARGET_FILE}
+            repo.index.add(target_file)
+            #git commit -m "TIRA-Automation: software was executed and evaluated." || echo "No changes to commit"
+            succ = repo.index.commit("TIRA-Automation: software was executed and evaluated.")
+            if not succ:
+                print("No changes to commit")
+
+            #git push -o ci.skip origin HEAD:$CI_COMMIT_BRANCH
+            ci_commit_branch = os.getenv("CI_COMMIT_BRANCH")
+            repo.git.push("origin", "HEAD:"+ci_commit_branch , "-o ", "ci.skip")            
+
+            #python3 -c 'from tira.git_integration.gitlab_integration import merge_to_main_failsave; merge_to_main_failsave()'
+            merge_to_main_failsave()    
+
+        else:
+            #echo "The file ${DIR_TO_CHANGE}/job-to-execute.txt does not exist, I cant change it."
+            print("The file " + dir_to_change + "/job-to-execute.txt does not exist, I cant change it.")
+
+        #if [ -f "${TIRA_FINAL_EVALUATION_OUTPUT_DIR}" ]; then
+        if os.path.exists(tira_final_evaluation_output_dir):
+            #echo "${TIRA_FINAL_EVALUATION_OUTPUT_DIR} exists already. Exit."
+            print(tira_final_evaluation_output_dir + " exists already. Exit.")
+            #exit 0
+            exit(0)
+
+        # TODO: Warum ist das doppelt?
+        #if [ -d "${TIRA_FINAL_EVALUATION_OUTPUT_DIR}" ]; then
+        #    echo "${TIRA_FINAL_EVALUATION_OUTPUT_DIR} exists already. Exit."
+        #    exit 0
+        #fi
+
+        #mkdir -p "${SRC_DIR}"
+        os.mkdir(src_dir)
+        #su tira
+        os.system("su tira")
+        #mkdir -p "${TIRA_FINAL_EVALUATION_OUTPUT_DIR}"
+        os.mkdir(tira_final_evaluation_output_dir)
+
+        #echo "cp -r ${SRC_DIR} ${TIRA_FINAL_EVALUATION_OUTPUT_DIR}"
+        print("shutil.copytree("+ src_dir + ", " + tira_final_evaluation_output_dir + ")")
+        #cp -r ${SRC_DIR} ${TIRA_FINAL_EVALUATION_OUTPUT_DIR}
+        shutil.copytree(src_dir, tira_final_evaluation_output_dir)
+
+        #EVAL_RUN_ID=$(echo $TIRA_FINAL_EVALUATION_OUTPUT_DIR| awk -F '/' '{print ($NF)}')
+        eval_run_id = os.getenv("TIRA_FINAL_EVALUATION_OUTPUT_DIR").split('/')[-1]
+
+        #python3 -c "from tira.git_integration.gitlab_integration import persist_tira_metadata_for_job; persist_tira_metadata_for_job('${TIRA_FINAL_EVALUATION_OUTPUT_DIR}', '${EVAL_RUN_ID}', 'evaluate-software-result')"
+        self.persist_tira_metadata_for_job_intern(tira_final_evaluation_output_dir, eval_run_id, 'evaluate-software-result')
+
+        #su root
+        os.system("su root")
+        #echo "chown directories"
+        print("chown directories")
+        #chown -R tira:tira ${TIRA_FINAL_EVALUATION_OUTPUT_DIR}
+        shutil.chown(tira_final_evaluation_output_dir, "tira", "tira")
+        #chown -R tira:tira ${TIRA_FINAL_EVALUATION_OUTPUT_DIR}/../${TIRA_RUN_ID}
+        shutil.chown(Path(tira_final_evaluation_output_dir) / '..' / os.environ['TIRA_RUN_ID'], "tira", "tira")
+
+        #echo "python3 /tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id ${TIRA_VM_ID} --dataset_id ${TIRA_DATASET_ID} --run_id ${TIRA_RUN_ID} --transaction_id 1 --task confirm-run-execute"
+        print("/tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id " + os.getenv('TIRA_VM_ID')+ "--dataset_id " + os.getenv('TIRA_DATASET_ID') + "--run_id " + os.getenv('TIRA_RUN_ID') + "--transaction_id 1 --task confirm-run-execute")
+        #python3 /tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id ${TIRA_VM_ID} --dataset_id ${TIRA_DATASET_ID} --run_id ${TIRA_RUN_ID} --transaction_id 1 --task confirm-run-execute
+        os.system("/tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id "+os.getenv('TIRA_VM_ID')+" --dataset_id "+os.getenv('TIRA_DATASET_ID')+" --run_id "+os.getenv('TIRA_RUN_ID')+" --transaction_id 1 --task confirm-run-execute")
+
+
+        #echo "python3 /tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id ${TIRA_VM_ID} --dataset_id ${TIRA_DATASET_ID} --run_id ${EVAL_RUN_ID} --transaction_id  ${TIRA_EVALUATOR_TRANSACTION_ID} --task confirm-run-eval"
+        print("/tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id "+ os.getenv('TIRA_VM_ID') + " --dataset_id " + os.getenv('TIRA_DATASET_ID') + "--run_id " + eval_run_id + "--transaction_id " + os.getenv('TIRA_EVALUATOR_TRANSACTION_ID') + "--task confirm-run-eval")
+        #python3 /tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id ${TIRA_VM_ID} --dataset_id ${TIRA_DATASET_ID} --run_id ${EVAL_RUN_ID} --transaction_id  ${TIRA_EVALUATOR_TRANSACTION_ID} --task confirm-run-eval
+        os.system("/tira/application/src/tira/git_integration/grpc_wrapper.py --input_run_vm_id "+ os.getenv('TIRA_VM_ID') + " --dataset_id "+ os.getenv('TIRA_DATASET_ID')+" --run_id "+ eval_run_id+" --transaction_id "+ os.getenv('TIRA_EVALUATOR_TRANSACTION_ID')+" --task confirm-run-eval")
+
+        #env|grep 'TIRA' >> task.env
+        _file = open('task.env', 'a')
+        for k, v in os.environ.items():
+            if "TIRA" in k:
+                _file.write(f'{k}={v}')
+        f.close()
+
+        #python3 -c 'from tira.git_integration.gitlab_integration import delete_branch_of_repository; delete_branch_of_repository()'
+        delete_branch_of_repository()
+
+
 
 
 class TiraGitlabCiInterface(TiraCiInterface):
 
     def persist_tira_metadata_for_job_intern(run_dir, run_id, job_name):
-        #persist_tira_metadata_for_job(run_dir, run_id, job_name)
-        pass
+        persist_tira_metadata_for_job(run_dir, run_id, job_name)
+        return
 
-    pass
 
 class TiraGithubCiInterface(TiraCiInterface):
 
-    def persist_tira_metadata_for_job_intern(run_dir, run_id, job_name):
-        #TODO: implement
-        pass
+    def read_creds(name):
+        return open('/etc/tira-git-credentials/' + name).read().strip()
+
+    def github_client(self):
+        self.git_token = self.read_creds('GITCREDENTIALPRIVATETOKEN')
+        return Github(login_or_token = self.git_token, base_url = ('https://' + os.environ['CI_SERVER_HOST']))
+
+        ## so war es für gitlab --> annahme wir wollen nicht alles was am Token hängt sondern nur das aus der base_url ??
+        ## return gitlab.Gitlab('https://' + os.environ['CI_SERVER_HOST'], private_token=self.read_creds('GITCREDENTIALPRIVATETOKEN'))
+
+    def persist_tira_metadata_for_job_intern(self, run_dir, run_id, job_name):
+        with open(os.path.join(run_dir, 'run.prototext'), 'w') as f:
+            f.write(self.run_prototext(run_id, job_name))
+
+        with open(os.path.join(run_dir, 'file-list.txt'), 'wb') as f:
+            file_list = check_output(['tree', '-ahv', os.path.join(run_dir, 'output')])
+            f.write(file_list)
+
+        with open(os.path.join(run_dir, 'stdout.txt'), 'w') as f:
+            f.write(self.job_trace(job_name) + '\n')
+
+        with open(os.path.join(run_dir, 'stderr.txt'), 'w') as f:
+            f.write('################################################################\n# Executed Command\n################################################################\n'+  self.job_command(job_name) + '\n################################################################\n')
+
+        with open(os.path.join(run_dir, 'size.txt'), 'wb') as f:
+            f.write(check_output(['bash', '-c', '(du -sb "' + run_dir + '" && du -hs "' +  run_dir + '") | cut -f1']))
+            f.write(check_output(['bash', '-c', 'find "' + os.path.join(run_dir, 'output') + '" -type f -exec cat {} + | wc -l']))
+            f.write(check_output(['bash', '-c', 'find "' + os.path.join(run_dir, 'output') + '" -type f | wc -l']))
+            f.write(check_output(['bash', '-c', 'find "' + os.path.join(run_dir, 'output') + '" -type d | wc -l']))
+
+    def run_prototext(run_id, job_name):
+        inputRun = os.environ['TIRA_RUN_ID'] if ('evaluate-software-result' == job_name) else 'none'
+        software_id = os.environ['TIRA_SOFTWARE_ID'] if ('run-user-software' == job_name) else os.environ['TIRA_EVALUATION_SOFTWARE_ID']
+
+    def job_trace(self, name):
+        return self.clean_job_output(self.get_job(name).trace().decode('UTF-8'))
+
+    def clean_job_output(self, ret):
+        ret = ''.join(filter(lambda x: x in string.printable, ret.strip()))
+        if '$ eval "${TIRA_COMMAND_TO_EXECUTE}"[0;m' in ret:
+            return self.clean_job_suffix(ret.split('$ eval "${TIRA_COMMAND_TO_EXECUTE}"[0;m')[1])
+        elif '$ eval "${TIRA_EVALUATION_COMMAND_TO_EXECUTE}"[0;m' in ret:
+            return self.clean_job_suffix(ret.split('$ eval "${TIRA_EVALUATION_COMMAND_TO_EXECUTE}"[0;m')[1])
+        else:
+            raise ValueError('The format of the output seems to be changed...\n\n' + ret)
+
+    def clean_job_suffix(ret):
+        if "[32;1m$ env|grep 'TIRA' > task.env" in ret:
+            ret = ret.split("[32;1m$ env|grep 'TIRA' > task.env")[0]
+        if "section_end:" in ret:
+            ret = ret.split("section_end:")[0]
+
+        return ret.strip()
+
+    def get_job(self, name):
+        gl = self.github_client()
+        repos = gl.get_user().get_repos()
+        for r in repos:
+            if r.id == int(os.environ['CI_PROJECT_ID']):
+                wf = r.get_workflow(int(os.environ['CI_PIPELINE_ID']))
+
+        try:
+            wf
+        except NameError:
+            raise ValueError('I could not find the workflow.')
+        else:
+            runs = wf.get_runs()
+            for run in runs:
+                if run.name == name:
+                    return run
+
+        raise ValueError('I could not find the job trace.')
+
+    def job_command(self, name):
+        return self.clean_job_command(self.get_job(name).trace().decode('UTF-8'))
+
+    def clean_job_command(ret):
+        ret = ''.join(filter(lambda x: x in string.printable, ret.strip()))
 
     pass
 
@@ -384,5 +578,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # start the interface
-    tira_ci_interface = TiraCiInterface()
-    tira_ci_interface.execute(step=args.step)
+    if(EXECUTED_ON_GITHUB):
+        tira_ci_interface = TiraGithubCiInterface()
+        tira_ci_interface.execute(step=args.step)
+    else:
+        tira_ci_interface = TiraGitlabCiInterface()
+        tira_ci_interface.execute(step=args.step)
