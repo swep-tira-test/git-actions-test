@@ -132,10 +132,11 @@ jobs:
             --network none
           #shell: bash
           run: |
-            echo "${TIRA_COMMAND_TO_EXECUTE}"
-            eval "${TIRA_COMMAND_TO_EXECUTE}"
-            echo "${TIRA_CLEAN_UP_COMMAND}"
-            eval "${TIRA_CLEAN_UP_COMMAND}"
+            test -n "${{ env.TIRA_OUTPUT_DIR }}" && mkdir -p ${TIRA_OUTPUT_DIR}
+            echo "${{ env.TIRA_COMMAND_TO_EXECUTE }}"
+            eval "${{ env.TIRA_COMMAND_TO_EXECUTE }}"
+            echo "${{ env.TIRA_CLEAN_UP_COMMAND }}"
+            eval "${{ env.TIRA_CLEAN_UP_COMMAND }}"
           #  env|grep 'TIRA' > task.env
         continue-on-error: true
 
@@ -189,8 +190,8 @@ jobs:
             --network none
           #shell: bash
           run: |
-            echo "${TIRA_EVALUATION_COMMAND_TO_EXECUTE}"
-            eval "${TIRA_EVALUATION_COMMAND_TO_EXECUTE}"
+            echo "${{ env.TIRA_EVALUATION_COMMAND_TO_EXECUTE }}"
+            eval "${{ env.TIRA_EVALUATION_COMMAND_TO_EXECUTE }}"
           # env|grep 'TIRA' > task.env
         continue-on-error: true
         
