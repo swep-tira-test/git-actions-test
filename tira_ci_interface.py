@@ -12,7 +12,7 @@ import json
 import sys
 from django.conf import settings
 from datetime import datetime as dt
-from tira.gitlab_integration import persist_tira_metadata_for_job, merge_to_main_failsave, delete_branch_of_repository
+#from tira.gitlab_integration import persist_tira_metadata_for_job, merge_to_main_failsave, delete_branch_of_repository
 from git import Repo
 import string
 from github import Github
