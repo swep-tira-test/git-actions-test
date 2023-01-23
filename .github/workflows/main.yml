@@ -97,6 +97,7 @@ jobs:
           #password: ${{ secrets.DOCKER_PASSWORD }}
           #registry: gcr.io
           image: webis/tira-git-pipelines:0.0.19
+          # TODO: "-v ${{ github.workspace }}/:/tira/application/src/" is only there to test the new tira_ci_interface.py (located at the root of the rep)
           options: | 
             -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_INPUT_PATH }}:/input
             -v ${{ github.workspace }}/${{ env.TIRA_DATASET_TASK_OUTPUT_PATH }}:/output
