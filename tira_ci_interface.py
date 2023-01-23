@@ -194,10 +194,7 @@ class TiraCiInterface:
         for i in identify_environment_variables(job_to_execute):
             print(i.strip())
 
-
-        # zusätzlich von dem hochgeladenen File eingelesenes Argument: verzeichnisse für input/output (bei Gitlab Implementation bisher: CEPH)
-        # job-to-execute.txt
-        pass
+        return
 
     def provisioning2_persist_software_result(self):
         """ TODO Dane
