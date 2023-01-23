@@ -132,7 +132,6 @@ jobs:
             --network none
           #shell: bash
           run: |
-            test -n "${TIRA_OUTPUT_DIR}" && mkdir -p ${TIRA_OUTPUT_DIR}
             echo "${TIRA_COMMAND_TO_EXECUTE}"
             eval "${TIRA_COMMAND_TO_EXECUTE}"
             echo "${TIRA_CLEAN_UP_COMMAND}"
